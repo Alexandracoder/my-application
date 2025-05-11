@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     tools {
-        maven 'Maven' // Utiliza la instalación predeterminada de Maven configurada en Jenkins
+       HOME/.m2/settings.xml
     }
     
     stages {

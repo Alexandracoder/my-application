@@ -1,52 +1,76 @@
 pipeline {
-    agent any
+    agent any  // Ejecuta el pipeline en cualquier nodo disponible
+
+    tools {
+        maven 'Maven'  // Usa la instalación predeterminada de Maven configurada en Jenkins
+    }
+
+    environment {
+        // Puedes agregar variables de entorno si las necesitas
+    }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout') {  // Etapa para obtener el código fuente desde Git
             steps {
-                checkout scm
+                checkout scm  // Realiza el checkout del código desde el repositorio Git configurado
             }
         }
         
-        stage('Build') {
+        stage('Build') {  // Etapa para compilar el proyecto con Maven
             steps {
                 script {
-                    // Configura Maven con el archivo settings.xml desde la ubicación predeterminada
-                    withEnv(["MAVEN_OPTS=-s $HOME/.m2/settings.xml"]) {
-                        sh 'mvn clean install'
+                    // Asegúrate de tener Maven configurado y ejecutarlo correctamente
+                    sh 'mvn clean install'  // Ejecuta el comando de Maven para construir el proyecto
+                }
+            }
+        }
+
+        stage('Test') {  // Etapa de pruebas con Maven
+            steps {
+                script {
+                    // Ejecuta las pruebas unitarias con Maven
+                    sh 'mvn test'  // Ejecuta el comando de pruebas de Maven
+                }
+            }
+        }
+
+        stage('Docker Build') {  // Etapa para construir la imagen Docker
+            steps {
+                script {
+                    // Construir la imagen Docker si necesitas hacer un build
+                    sh 'docker build -t my-app .'  // Reemplaza 'my-app' con el nombre de tu imagen
+                }
+            }
+        }
+
+        stage('Docker Push') {  // Etapa para enviar la imagen Docker a DockerHub
+            steps {
+                script {
+                    // Si estás usando DockerHub, asegúrate de tener configuradas las credenciales
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
+                        sh 'docker push my-app'  // Reemplaza 'my-app' con el nombre de tu imagen
                     }
                 }
             }
         }
-    }
-}
 
-        }
-        
-        stage('Docker Build') {
+        stage('Deploy') {  // Etapa de despliegue (ajústalo según tu necesidad)
             steps {
-                // Aquí se construiría la imagen de Docker (si tienes un Dockerfile configurado)
-                sh 'docker build -t my-application .'
-            }
-        }
-        
-        stage('Docker Push') {
-            steps {
-                // Aquí se haría el push de la imagen a DockerHub (si está configurado)
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                    sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD"
-                    sh 'docker push my-application'
+                script {
+                    // Simula un despliegue (ajusta según tu caso)
+                    echo 'Deploying application'
                 }
             }
         }
     }
-    
+
     post {
         success {
-            echo '¡La construcción fue exitosa!'
+            echo 'Pipeline completed successfully!'
         }
         failure {
-            echo 'Hubo un error en la construcción.'
+            echo 'Pipeline failed. Please check the logs for more details.'
         }
     }
 }

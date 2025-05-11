@@ -2,11 +2,13 @@ pipeline {
     agent any  // Ejecuta el pipeline en cualquier nodo disponible
 
     tools {
-        maven 'Maven'  // Usa la instalación predeterminada de Maven configurada en Jenkins
+        maven 'Maven'  // Usa la instalación de Maven configurada en Jenkins
     }
 
     environment {
-        // Puedes agregar variables de entorno si las necesitas
+        // Define variables de entorno si es necesario
+        // Por ejemplo, si necesitas algún valor para conectar a un servidor:
+        // MY_VARIABLE = 'some_value'
     }
 
     stages {
@@ -72,5 +74,8 @@ pipeline {
         failure {
             echo 'Pipeline failed. Please check the logs for more details.'
         }
+    }
+}
+
     }
 }

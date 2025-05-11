@@ -1,23 +1,26 @@
 pipeline {
     agent any
-    
-    tools {
-       HOME/.m2/settings.xml
-    }
-    
+
     stages {
         stage('Checkout') {
             steps {
-                // Se hace el checkout del repositorio para obtener el código fuente
                 checkout scm
             }
         }
         
         stage('Build') {
             steps {
-                // Usamos Maven para compilar el proyecto
-                sh 'mvn clean install'
+                script {
+                    // Configura Maven con el archivo settings.xml desde la ubicación predeterminada
+                    withEnv(["MAVEN_OPTS=-s $HOME/.m2/settings.xml"]) {
+                        sh 'mvn clean install'
+                    }
+                }
             }
+        }
+    }
+}
+
         }
         
         stage('Docker Build') {

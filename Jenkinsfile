@@ -1,76 +1,49 @@
 pipeline {
-    agent any  // Utiliza cualquier agente disponible (puede ser un nodo específico si lo prefieres)
-
-    environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-id')  // Aquí se definen las credenciales de Docker Hub
-        DOCKER_IMAGE_NAME = 'my-app'  // Nombre de la imagen Docker que quieres construir
-    }
-
+    agent any
+    
     tools {
-        maven 'Maven'  // Especifica la herramienta de Maven configurada previamente en Jenkins
-        // Asegúrate de que el nombre 'Maven' coincida con el nombre configurado en Jenkins
+        maven 'Maven' // Utiliza la instalación predeterminada de Maven configurada en Jenkins
     }
-
+    
     stages {
         stage('Checkout') {
             steps {
-                // Clonar el repositorio Git que contiene el código fuente
+                // Se hace el checkout del repositorio para obtener el código fuente
                 checkout scm
             }
         }
-
-        stage('Build with Maven') {
+        
+        stage('Build') {
             steps {
-                // Ejecuta Maven para limpiar y construir el proyecto
+                // Usamos Maven para compilar el proyecto
                 sh 'mvn clean install'
             }
         }
-
-        stage('Build Docker Image') {
+        
+        stage('Docker Build') {
             steps {
-                // Construir la imagen Docker
-                script {
-                    // Construir la imagen Docker usando el Dockerfile en el proyecto
-                    sh 'docker build -t $DOCKER_IMAGE_NAME .'
-                }
+                // Aquí se construiría la imagen de Docker (si tienes un Dockerfile configurado)
+                sh 'docker build -t my-application .'
             }
         }
-
-        stage('Login to Docker Hub') {
+        
+        stage('Docker Push') {
             steps {
-                // Iniciar sesión en Docker Hub usando las credenciales almacenadas
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
-                        echo 'Successfully logged in to Docker Hub'
-                    }
-                }
-            }
-        }
-
-        stage('Push to Docker Hub') {
-            steps {
-                // Empujar la imagen construida a Docker Hub
-                script {
-                    // Etiquetar la imagen antes de enviarla
-                    sh 'docker tag $DOCKER_IMAGE_NAME:latest $DOCKERHUB_CREDENTIALS_USR/$DOCKER_IMAGE_NAME:latest'
-                    // Subir la imagen
-                    sh 'docker push $DOCKERHUB_CREDENTIALS_USR/$DOCKER_IMAGE_NAME:latest'
+                // Aquí se haría el push de la imagen a DockerHub (si está configurado)
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD"
+                    sh 'docker push my-application'
                 }
             }
         }
     }
-
+    
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo '¡La construcción fue exitosa!'
         }
-
         failure {
-            echo 'Pipeline failed. Please check the logs.'
-        }
-
-        always {
-            cleanWs()  // Limpiar el workspace después de la ejecución
+            echo 'Hubo un error en la construcción.'
         }
     }
 }
